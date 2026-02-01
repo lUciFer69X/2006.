@@ -215,17 +215,17 @@
         <div class="photo-slider">
             <!-- 
                 تم تحديث الروابط لتقرأ الصور من المجلد مباشرة
-                تأكد أن أسماء الصور لديك هي: hiba1.jpg, hiba2.jpg, hiba3.jpg
+                💡 ملاحظة: تمت إضافة كود احتياطي (onerror) لعرض صورة بديلة إذا لم يجد الصورة الأصلية
             -->
             
             <!-- الصورة الأولى -->
-            <img src="hiba1.jpg" class="active" alt="صورة هبه 1">
+            <img src="hiba1.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Hiba&background=ff9ff3&color=fff&size=150'" class="active" alt="صورة هبه 1">
             
             <!-- الصورة الثانية -->
-            <img src="hiba2.jpg" alt="صورة هبه 2">
+            <img src="hiba2.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Nurse&background=9b59b6&color=fff&size=150'" alt="صورة هبه 2">
             
             <!-- الصورة الثالثة -->
-            <img src="hiba3.jpg" alt="صورة هبه 3">
+            <img src="hiba3.jpg" onerror="this.src='https://ui-avatars.com/api/?name=H+B&background=54a0ff&color=fff&size=150'" alt="صورة هبه 3">
         </div>
 
         <h1>
@@ -275,17 +275,31 @@
                 musicBtn.classList.remove('music-playing');
                 musicBtn.innerHTML = "🎵";
             } else {
-                // ملاحظة: المتصفحات قد تمنع التشغيل التلقائي إذا لم يضع المستخدم ملف صوتي صالح
-                music.play().catch(e => alert("يرجى إضافة ملف صوتي في الكود أولاً!"));
-                musicBtn.classList.add('music-playing');
-                musicBtn.innerHTML = "⏸";
+                // محاولة التشغيل مع معالجة الأخطاء
+                var playPromise = music.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        // التشغيل نجح
+                        musicBtn.classList.add('music-playing');
+                        musicBtn.innerHTML = "⏸";
+                    })
+                    .catch(error => {
+                        // التشغيل فشل (غالباً بسبب عدم وجود الملف أو منع المتصفح)
+                        console.log("Music play failed:", error);
+                        alert("⚠️ تأكدي أن ملف الأغنية song.mp3 موجود في نفس الفولدر!");
+                    });
+                }
             }
             isPlaying = !isPlaying;
         }
 
         function manualCelebrate() {
             fireConfetti();
-            if (!isPlaying) toggleMusic(); // تشغيل الموسيقى عند الضغط على الزر أيضاً
+            // تشغيل الموسيقى فقط إذا لم تكن تعمل بالفعل
+            if (music.paused) {
+                 toggleMusic();
+            }
         }
 
         // --- العداد ---
@@ -319,9 +333,12 @@
         }
 
         function showBirthdayMessage() {
+            // نحتفظ بالسلايدر القديم عشان نعيد استخدامه
+            const sliderHTML = document.querySelector('.photo-slider').outerHTML;
+            
             cardElement.innerHTML = `
-                <div class="photo-slider" style="margin-bottom:15px">
-                     ${document.querySelector('.photo-slider').innerHTML}
+                <div style="margin-bottom:15px">
+                     ${sliderHTML}
                 </div>
                 <h1 style="font-size: 2.2rem; margin-bottom: 15px;">🎉 كل سنة وإنتِ طيبة 🎉</h1>
                 <h2 style="color: #ff9ff3; font-size: 1.5rem;">يا أحلى هبه وأشطر نيرس 👩‍⚕️</h2>
@@ -331,10 +348,12 @@
                 </p>
                 <button class="celebrate-btn" onclick="manualCelebrate()">احتفال تاني! 🥳</button>
             `;
+            
             // إعادة تفعيل السلايدر في الرسالة الجديدة
             setTimeout(() => {
                 const newSlides = document.querySelectorAll('.photo-slider img');
                 let newCurrent = 0;
+                // إعادة تفعيل الأنيميشن
                 setInterval(() => {
                     newSlides[newCurrent].classList.remove('active');
                     newCurrent = (newCurrent + 1) % newSlides.length;
