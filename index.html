@@ -8,10 +8,10 @@
     <!-- أيقونة الموقع (تظهر في التبويب) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💜</text></svg>">
 
-    <!-- بيانات المشاركة (عشان لما تبعت اللينك يظهر شكله حلو) -->
+    <!-- بيانات المشاركة -->
     <meta property="og:title" content="عيد ميلاد أحلى هبه 💜">
     <meta property="og:description" content="كل سنة وإنتِ طيبة يا أشطر نيرس في الدنيا 💉✨">
-    <meta property="og:image" content="hiba1.jpg"> <!-- ستظهر أول صورة كصورة للرابط -->
+    <meta property="og:image" content="hiba1.jpg">
     <meta property="og:type" content="website">
 
     <!-- استدعاء خط عربي جميل (Cairo) -->
@@ -101,7 +101,7 @@
         .music-btn {
             position: absolute;
             top: 20px;
-            left: 20px; /* مكان الزر */
+            left: 20px;
             background: rgba(255,255,255,0.2);
             border: none;
             border-radius: 50%;
@@ -197,6 +197,26 @@
         .celebrate-btn:active { transform: scale(0.95); }
         .celebrate-btn:hover { box-shadow: 0 6px 20px rgba(255, 159, 243, 0.6); }
 
+        /* رسائل الخطأ */
+        #error-log {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .error-msg {
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
         .heart-beat {
             display: inline-block;
             animation: beat 1s infinite alternate;
@@ -216,6 +236,9 @@
 </head>
 <body>
 
+    <!-- مكان ظهور رسائل الأخطاء (للمساعدة في الحل) -->
+    <div id="error-log"></div>
+
     <div class="glass-card" id="card">
         <!-- زر الموسيقى -->
         <button class="music-btn" onclick="toggleMusic()" id="musicBtn" title="تشغيل الموسيقى">🎵</button>
@@ -223,19 +246,14 @@
         <!-- ألبوم الصور (ضع صور هبه هنا) -->
         <div class="photo-slider">
             <!-- 
-                ⚠ هام جداً للرفع على GitHub:
-                - تأكد أن أسماء الصور (hiba1.jpg, etc) مكتوبة بنفس حالة الأحرف بالضبط (Small letters).
-                - GitHub حساس للأحرف (Case Sensitive)، يعني hiba1.jpg غير Hiba1.jpg.
+                هام جداً:
+                تأكد أن أسماء الصور هي: hiba1.jpg, hiba2.jpg, hiba3.jpg
+                إذا ظهرت لك رسالة خطأ بالأحمر، فهذا يعني أن الاسم غير مطابق.
             -->
             
-            <!-- الصورة الأولى -->
-            <img src="hiba1.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Hiba&background=ff9ff3&color=fff&size=150'" class="active" alt="صورة هبه 1">
-            
-            <!-- الصورة الثانية -->
-            <img src="hiba2.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Nurse&background=9b59b6&color=fff&size=150'" alt="صورة هبه 2">
-            
-            <!-- الصورة الثالثة -->
-            <img src="hiba3.jpg" onerror="this.src='https://ui-avatars.com/api/?name=H+B&background=54a0ff&color=fff&size=150'" alt="صورة هبه 3">
+            <img src="hiba1.jpg" id="img1" class="active" alt="صورة هبه 1">
+            <img src="hiba2.jpg" id="img2" alt="صورة هبه 2">
+            <img src="hiba3.jpg" id="img3" alt="صورة هبه 3">
         </div>
 
         <h1>
@@ -255,24 +273,43 @@
         <button class="celebrate-btn" onclick="manualCelebrate()">🎉  دوسي كده</button>
     </div>
 
-    <!-- عنصر الصوت المخفي -->
-    <!-- تأكد من رفع ملف song.mp3 إلى GitHub في نفس المجلد -->
-    <audio id="bgMusic" loop>
+    <!-- عنصر الصوت -->
+    <audio id="bgMusic" loop preload="auto">
         <source src="song.mp3" type="audio/mpeg">
     </audio>
 
     <script>
+        // --- نظام فحص الملفات (Debugging) ---
+        // هذا الكود سيساعدك في معرفة سبب عدم عمل الصور أو الصوت
+        window.addEventListener('error', function(e) {
+            if (e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'SOURCE')) {
+                const src = e.target.getAttribute('src') || e.target.src;
+                const fileName = src.split('/').pop(); // استخراج اسم الملف فقط
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-msg';
+                errorDiv.innerHTML = `⚠️ لم أتمكن من العثور على الملف: <b>${fileName}</b><br>تأكد من الاسم والامتداد (مثلاً .jpg)`;
+                document.getElementById('error-log').appendChild(errorDiv);
+                
+                // وضع صورة بديلة لكي لا يبقى الشكل فارغاً
+                if(e.target.tagName === 'IMG') {
+                   // e.target.src = 'https://ui-avatars.com/api/?name=Hiba&background=random&color=fff';
+                }
+            }
+        }, true);
+
         // --- إعدادات الصور ---
         const slides = document.querySelectorAll('.photo-slider img');
         let currentSlide = 0;
 
-        // دالة تغيير الصور تلقائياً
         function nextSlide() {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
+            if(slides.length > 0) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
         }
-        setInterval(nextSlide, 3000); // تغيير الصورة كل 3 ثواني
+        setInterval(nextSlide, 3000);
 
         // --- إعدادات الموسيقى ---
         const music = document.getElementById('bgMusic');
@@ -285,19 +322,19 @@
                 musicBtn.classList.remove('music-playing');
                 musicBtn.innerHTML = "🎵";
             } else {
-                // محاولة التشغيل مع معالجة الأخطاء
                 var playPromise = music.play();
-                
                 if (playPromise !== undefined) {
                     playPromise.then(_ => {
-                        // التشغيل نجح
                         musicBtn.classList.add('music-playing');
                         musicBtn.innerHTML = "⏸";
                     })
                     .catch(error => {
-                        console.log("Music play failed:", error);
-                        // رسالة تحذير فقط إذا فشل التشغيل
-                        // alert("⚠️ تأكدي أن ملف الأغنية song.mp3 موجود في نفس الفولدر!");
+                        console.log("Music error:", error);
+                        // نظهر رسالة خطأ إذا لم يجد ملف الصوت
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-msg';
+                        errorDiv.innerHTML = `⚠️ لا يمكن تشغيل الصوت. تأكد أن ملف <b>song.mp3</b> موجود.`;
+                        document.getElementById('error-log').appendChild(errorDiv);
                     });
                 }
             }
@@ -306,7 +343,6 @@
 
         function manualCelebrate() {
             fireConfetti();
-            // تشغيل الموسيقى فقط إذا لم تكن تعمل بالفعل
             if (music.paused) {
                  toggleMusic();
             }
@@ -343,7 +379,6 @@
         }
 
         function showBirthdayMessage() {
-            // نحتفظ بالسلايدر القديم عشان نعيد استخدامه
             const sliderHTML = document.querySelector('.photo-slider').outerHTML;
             
             cardElement.innerHTML = `
@@ -359,11 +394,9 @@
                 <button class="celebrate-btn" onclick="manualCelebrate()">احتفال تاني! 🥳</button>
             `;
             
-            // إعادة تفعيل السلايدر في الرسالة الجديدة
             setTimeout(() => {
                 const newSlides = document.querySelectorAll('.photo-slider img');
                 let newCurrent = 0;
-                // إعادة تفعيل الأنيميشن
                 setInterval(() => {
                     newSlides[newCurrent].classList.remove('active');
                     newCurrent = (newCurrent + 1) % newSlides.length;
@@ -372,7 +405,6 @@
             }, 100);
         }
 
-        // دالة Confetti (نفس السابقة)
         function fireConfetti() {
             var count = 200;
             var defaults = { origin: { y: 0.7 } };
